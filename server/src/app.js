@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import mongoose from 'mongoose';
+import productRoutes from './routes/productRoutes.js';
 
 const app = express();
 
@@ -24,6 +25,8 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use('/api/products', productRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
