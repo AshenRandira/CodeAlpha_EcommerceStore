@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router';
 import ErrorMessage from '../components/ErrorMessage.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import Navbar from '../components/Navbar.jsx';
+import { useCart } from '../context/useCart.js';
 
 const priceFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -11,12 +12,18 @@ const priceFormatter = new Intl.NumberFormat('en-US', {
 
 function ProductDetailsPage() {
   const { id } = useParams();
+  const {
+    addToCart,
+    cartItems,
+  } = useCart();
 
   const [productState, setProductState] = useState({
     state: 'loading',
     product: null,
     error: '',
   });
+  const [quantity, setQuantity] = useState(1);
+  const [cartMessage, setCartMessage] = useState('');
 
   useEffect(() => {
     const controller = new AbortController();
@@ -27,6 +34,8 @@ function ProductDetailsPage() {
         product: null,
         error: '',
       });
+      setQuantity(1);
+      setCartMessage('');
 
       try {
         const response = await fetch(`/api/products/${id}`, {
@@ -74,6 +83,77 @@ function ProductDetailsPage() {
     };
   }, [id]);
 
+  const product =
+    productState.state === 'success'
+      ? productState.product
+      : null;
+
+  const cartItem = product
+    ? cartItems.find((item) => item.productId === product._id)
+    : null;
+
+  const quantityInCart = cartItem?.quantity ?? 0;
+
+  const remainingStock = product
+    ? Math.max(0, product.stock - quantityInCart)
+    : 0;
+
+  const canAddToCart =
+    Boolean(product) &&
+    product.stock > 0 &&
+    remainingStock > 0;
+
+  function handleQuantityChange(event) {
+    const nextQuantity = Number(event.target.value);
+
+    if (!Number.isFinite(nextQuantity) || remainingStock <= 0) {
+      return;
+    }
+
+    setQuantity(
+      Math.min(
+        remainingStock,
+        Math.max(1, Math.trunc(nextQuantity)),
+      ),
+    );
+    setCartMessage('');
+  }
+
+  function decreaseQuantity() {
+    setQuantity((currentQuantity) =>
+      Math.max(1, currentQuantity - 1),
+    );
+    setCartMessage('');
+  }
+
+  function increaseQuantity() {
+    setQuantity((currentQuantity) =>
+      Math.min(remainingStock, currentQuantity + 1),
+    );
+    setCartMessage('');
+  }
+
+  function handleAddToCart() {
+    if (!product || !canAddToCart) {
+      return;
+    }
+
+    const quantityToAdd = Math.min(quantity, remainingStock);
+    const added = addToCart(product, quantityToAdd);
+
+    if (!added) {
+      setCartMessage('This product could not be added to your cart.');
+      return;
+    }
+
+    setCartMessage(
+      `${quantityToAdd} ${
+        quantityToAdd === 1 ? 'item' : 'items'
+      } added to your cart.`,
+    );
+    setQuantity(1);
+  }
+
   return (
     <main className="min-h-screen bg-slate-50">
       <Navbar />
@@ -114,42 +194,42 @@ function ProductDetailsPage() {
           </div>
         )}
 
-        {productState.state === 'success' && (
+        {product && (
           <div className="grid overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-2">
             <div className="aspect-square bg-slate-100 lg:aspect-auto">
               <img
-                src={productState.product.imageUrl}
-                alt={productState.product.name}
+                src={product.imageUrl}
+                alt={product.name}
                 className="h-full w-full object-cover"
               />
             </div>
 
             <div className="flex flex-col justify-center p-7 sm:p-10 lg:p-14">
               <span className="w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
-                {productState.product.category}
+                {product.category}
               </span>
 
               <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-                {productState.product.name}
+                {product.name}
               </h1>
 
               <p className="mt-5 text-3xl font-bold text-slate-950">
-                {priceFormatter.format(productState.product.price)}
+                {priceFormatter.format(product.price)}
               </p>
 
               <p className="mt-6 text-base leading-7 text-slate-600">
-                {productState.product.description}
+                {product.description}
               </p>
 
               <div className="mt-8 border-t border-slate-200 pt-6">
-                {productState.product.stock > 0 ? (
+                {product.stock > 0 ? (
                   <div>
                     <p className="font-semibold text-emerald-700">
                       In stock
                     </p>
 
                     <p className="mt-1 text-sm text-slate-500">
-                      {productState.product.stock} units currently available
+                      {product.stock} units currently available
                     </p>
                   </div>
                 ) : (
@@ -158,6 +238,91 @@ function ProductDetailsPage() {
                   </p>
                 )}
               </div>
+
+              {product.stock > 0 && (
+                <div className="mt-8">
+                  {canAddToCart ? (
+                    <>
+                      {quantityInCart > 0 && (
+                        <p className="mb-4 text-sm font-medium text-slate-600">
+                          {quantityInCart} already in your cart. You can add up
+                          to {remainingStock} more.
+                        </p>
+                      )}
+
+                      <label
+                        htmlFor="product-quantity"
+                        className="text-sm font-semibold text-slate-700"
+                      >
+                        Quantity
+                      </label>
+
+                      <div className="mt-2 flex flex-col gap-4 sm:flex-row sm:items-center">
+                        <div className="flex w-fit items-center rounded-xl border border-slate-300 bg-white">
+                          <button
+                            type="button"
+                            onClick={decreaseQuantity}
+                            disabled={quantity <= 1}
+                            className="flex h-12 w-12 items-center justify-center rounded-l-xl text-xl font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                            aria-label="Decrease quantity"
+                          >
+                            −
+                          </button>
+
+                          <input
+                            id="product-quantity"
+                            type="number"
+                            min="1"
+                            max={remainingStock}
+                            value={quantity}
+                            onChange={handleQuantityChange}
+                            className="h-12 w-16 border-x border-slate-300 text-center font-semibold text-slate-900 outline-none"
+                            aria-label="Product quantity"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={increaseQuantity}
+                            disabled={quantity >= remainingStock}
+                            className="flex h-12 w-12 items-center justify-center rounded-r-xl text-xl font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:bg-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                            aria-label="Increase quantity"
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleAddToCart}
+                          className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                      <p className="font-semibold text-blue-900">
+                        Maximum available stock is already in your cart.
+                      </p>
+
+                      <p className="mt-1 text-sm text-blue-700">
+                        You currently have all {product.stock} available units.
+                      </p>
+                    </div>
+                  )}
+
+                  {cartMessage && (
+                    <p
+                      className="mt-4 text-sm font-semibold text-emerald-700"
+                      role="status"
+                      aria-live="polite"
+                    >
+                      {cartMessage}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

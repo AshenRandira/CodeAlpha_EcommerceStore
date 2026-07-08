@@ -1,4 +1,7 @@
 import { Route, Routes } from 'react-router';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import CartPage from './pages/CartPage.jsx';
+import CheckoutPage from './pages/CheckoutPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import ProductDetailsPage from './pages/ProductDetailsPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
@@ -9,8 +12,18 @@ function App() {
     <Routes>
       <Route path="/" element={<StorePage />} />
       <Route path="/products/:id" element={<ProductDetailsPage />} />
+      <Route path="/cart" element={<CartPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+
+      <Route
+        path="/checkout"
+        element={
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
