@@ -284,7 +284,7 @@ function OrderDetailsPage() {
 
                       <p className="mt-3 text-sm text-slate-600">
                         {priceFormatter.format(item.price)} each
-                        {' · '}
+                        {' - '}
                         Quantity: {item.quantity}
                       </p>
                     </div>

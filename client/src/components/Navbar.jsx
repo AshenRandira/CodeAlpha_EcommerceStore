@@ -14,8 +14,11 @@ function Navbar() {
 
   return (
     <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-5 sm:px-6 lg:px-8">
-        <Link to="/" className="group">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-5 sm:gap-4 sm:px-6 lg:px-8">
+        <Link
+          to="/"
+          className="group shrink-0"
+        >
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-600">
             CodeAlpha
           </p>
@@ -26,7 +29,7 @@ function Navbar() {
         </Link>
 
         <nav
-          className="flex items-center gap-2 sm:gap-3"
+          className="flex flex-wrap items-center justify-end gap-2 sm:gap-3"
           aria-label="Main navigation"
         >
           <Link
@@ -49,6 +52,13 @@ function Navbar() {
             </span>
           ) : isAuthenticated ? (
             <>
+              <Link
+                to="/orders"
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                My orders
+              </Link>
+
               <span className="hidden text-sm font-medium text-slate-600 sm:inline">
                 Hi, {user.name}
               </span>
@@ -56,7 +66,7 @@ function Navbar() {
               <button
                 type="button"
                 onClick={logout}
-                className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 sm:px-4"
               >
                 Log out
               </button>
@@ -65,14 +75,14 @@ function Navbar() {
             <>
               <Link
                 to="/login"
-                className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 sm:px-4"
               >
                 Log in
               </Link>
 
               <Link
                 to="/register"
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 sm:px-4"
               >
                 Register
               </Link>

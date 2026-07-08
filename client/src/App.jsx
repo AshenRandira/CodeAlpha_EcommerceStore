@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import CartPage from './pages/CartPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import NotFoundPage from './pages/NotFoundPage.jsx';
 import OrderDetailsPage from './pages/OrderDetailsPage.jsx';
 import OrdersPage from './pages/OrdersPage.jsx';
 import ProductDetailsPage from './pages/ProductDetailsPage.jsx';
@@ -44,6 +45,8 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

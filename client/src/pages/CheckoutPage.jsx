@@ -217,12 +217,12 @@ function CheckoutPage() {
             </p>
 
             <dl className="mx-auto mt-8 max-w-md divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-slate-50 text-left">
-              <div className="flex items-center justify-between gap-4 p-4">
+              <div className="grid gap-2 p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-4">
                 <dt className="text-sm font-medium text-slate-600">
                   Order ID
                 </dt>
 
-                <dd className="break-all text-right text-sm font-semibold text-slate-950">
+                <dd className="min-w-0 break-all font-mono text-xs font-semibold text-slate-950 sm:text-right">
                   {createdOrder._id}
                 </dd>
               </div>
@@ -252,12 +252,28 @@ function CheckoutPage() {
               Your cart was cleared only after the server confirmed the order.
             </p>
 
-            <Link
-              to="/"
-              className="mt-8 inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-            >
-              Continue shopping
-            </Link>
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
+              <Link
+                to={`/orders/${createdOrder._id}`}
+                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                View order details
+              </Link>
+
+              <Link
+                to="/orders"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                View my orders
+              </Link>
+
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                Continue shopping
+              </Link>
+            </div>
           </div>
         </section>
       </main>
