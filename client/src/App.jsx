@@ -3,6 +3,8 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import CartPage from './pages/CartPage.jsx';
 import CheckoutPage from './pages/CheckoutPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
+import OrderDetailsPage from './pages/OrderDetailsPage.jsx';
+import OrdersPage from './pages/OrdersPage.jsx';
 import ProductDetailsPage from './pages/ProductDetailsPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import StorePage from './pages/StorePage.jsx';
@@ -21,6 +23,24 @@ function App() {
         element={
           <ProtectedRoute>
             <CheckoutPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/orders"
+        element={
+          <ProtectedRoute>
+            <OrdersPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/orders/:id"
+        element={
+          <ProtectedRoute>
+            <OrderDetailsPage />
           </ProtectedRoute>
         }
       />
