@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
+import {
+  CheckCircle2,
+  Package,
+} from 'lucide-react';
+import Footer from '../components/Footer.jsx';
 import Navbar from '../components/Navbar.jsx';
 import { useAuth } from '../context/useAuth.js';
 import { useCart } from '../context/useCart.js';
-
-const priceFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-});
-
-const INITIAL_SHIPPING_ADDRESS = {
-  fullName: '',
-  addressLine1: '',
-  city: '',
-  postalCode: '',
-  country: '',
-};
+import { lkrFormatter } from '../utils/format.js';
 
 const SHIPPING_FIELDS = [
   {
@@ -23,12 +16,14 @@ const SHIPPING_FIELDS = [
     label: 'Full name',
     autoComplete: 'name',
     maxLength: 120,
+    colSpan: true,
   },
   {
     name: 'addressLine1',
     label: 'Address',
     autoComplete: 'street-address',
     maxLength: 200,
+    colSpan: true,
   },
   {
     name: 'city',
@@ -47,6 +42,7 @@ const SHIPPING_FIELDS = [
     label: 'Country',
     autoComplete: 'country-name',
     maxLength: 100,
+    colSpan: true,
   },
 ];
 
@@ -78,10 +74,7 @@ function validateShippingAddress(shippingAddress) {
 }
 
 function CheckoutPage() {
-  const {
-    token,
-    user,
-  } = useAuth();
+  const { token, user } = useAuth();
 
   const {
     cartItems,
@@ -90,10 +83,13 @@ function CheckoutPage() {
     clearCart,
   } = useCart();
 
-  const [shippingAddress, setShippingAddress] = useState(() => ({
-    ...INITIAL_SHIPPING_ADDRESS,
-    fullName: user?.name || '',
-  }));
+  const [shippingAddress, setShippingAddress] = useState({
+    fullName: user?.name ?? '',
+    addressLine1: '',
+    city: '',
+    postalCode: '',
+    country: 'Sri Lanka',
+  });
 
   const [validationErrors, setValidationErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
@@ -101,10 +97,7 @@ function CheckoutPage() {
   const [createdOrder, setCreatedOrder] = useState(null);
 
   function handleFieldChange(event) {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
     setShippingAddress((currentAddress) => ({
       ...currentAddress,
@@ -187,6 +180,9 @@ function CheckoutPage() {
       }
 
       setCreatedOrder(data.order);
+
+      // Clear the cart only after the server confirms
+      // that the order was successfully created.
       clearCart();
     } catch (error) {
       setSubmitError(
@@ -199,297 +195,319 @@ function CheckoutPage() {
 
   if (createdOrder) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-slate-50">
         <Navbar />
 
-        <section className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
-          <div className="rounded-3xl border border-emerald-200 bg-white p-8 text-center shadow-sm sm:p-12">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-emerald-700">
-              Order placed
-            </p>
+        <main className="flex flex-1 items-center justify-center px-4 py-12">
+          <section className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
+            <CheckCircle2
+              size={52}
+              strokeWidth={1.5}
+              className="mx-auto text-emerald-500"
+              aria-hidden="true"
+            />
 
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Thank you for your order.
+            <h1 className="mt-5 text-2xl font-extrabold text-slate-900 sm:text-3xl">
+              Order placed!
             </h1>
 
-            <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
-              Your order was created successfully and saved to your account.
+            <p className="mt-3 leading-6 text-slate-600">
+              Thank you for shopping with Nexus Tech. Your order
+              has been saved to your account.
             </p>
 
-            <dl className="mx-auto mt-8 max-w-md divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-slate-50 text-left">
-              <div className="grid gap-2 p-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-4">
-                <dt className="text-sm font-medium text-slate-600">
+            <dl className="mx-auto mt-7 max-w-sm divide-y divide-slate-100 rounded-xl border border-slate-200 bg-slate-50 text-left text-sm">
+              <div className="grid gap-2 px-4 py-3 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center sm:gap-4">
+                <dt className="text-slate-500">
                   Order ID
                 </dt>
 
-                <dd className="min-w-0 break-all font-mono text-xs font-semibold text-slate-950 sm:text-right">
+                <dd className="min-w-0 break-all font-mono text-xs font-semibold leading-5 text-slate-900 sm:text-right">
                   {createdOrder._id}
                 </dd>
               </div>
 
-              <div className="flex items-center justify-between gap-4 p-4">
-                <dt className="text-sm font-medium text-slate-600">
+              <div className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="text-slate-500">
                   Status
                 </dt>
 
-                <dd className="text-sm font-semibold capitalize text-slate-950">
+                <dd className="font-semibold capitalize text-slate-900">
                   {createdOrder.status}
                 </dd>
               </div>
 
-              <div className="flex items-center justify-between gap-4 p-4">
-                <dt className="font-medium text-slate-700">
-                  Subtotal
+              <div className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="font-semibold text-slate-700">
+                  Total
                 </dt>
 
-                <dd className="text-xl font-bold text-slate-950">
-                  {priceFormatter.format(createdOrder.subtotal)}
+                <dd className="text-lg font-extrabold text-slate-900">
+                  {lkrFormatter.format(createdOrder.subtotal)}
                 </dd>
               </div>
             </dl>
 
-            <p className="mx-auto mt-5 max-w-xl text-sm leading-6 text-slate-500">
-              Your cart was cleared only after the server confirmed the order.
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Your cart was cleared only after the server
+              confirmed the order.
             </p>
 
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
               <Link
                 to={`/orders/${createdOrder._id}`}
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 View order details
               </Link>
 
               <Link
                 to="/orders"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                View my orders
+                My orders
               </Link>
 
               <Link
                 to="/"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Continue shopping
               </Link>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+
+        <Footer />
+      </div>
     );
   }
 
   if (cartItems.length === 0) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-slate-50">
         <Navbar />
 
-        <section className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
-              Checkout
-            </p>
+        <main className="flex flex-1 items-center justify-center px-4 py-12">
+          <section className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-10">
+            <Package
+              size={40}
+              strokeWidth={1.5}
+              className="mx-auto text-slate-300"
+              aria-hidden="true"
+            />
 
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Your cart is empty.
+            <h1 className="mt-4 text-xl font-bold text-slate-900">
+              Your cart is empty
             </h1>
 
-            <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
-              Add at least one product before placing an order.
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Add at least one product before checking out.
             </p>
 
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
                 to="/"
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Browse products
               </Link>
 
               <Link
                 to="/cart"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Return to cart
+                View cart
               </Link>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-slate-50">
       <Navbar />
 
-      <section className="mx-auto max-w-7xl px-5 py-10 sm:px-6 sm:py-14 lg:px-8">
-        <div>
-          <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
-            Checkout
-          </p>
+      <main className="flex-1">
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+          <div className="mb-7">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Checkout
+            </h1>
 
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-            Complete your order
-          </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Enter your shipping details and confirm your order.
+            </p>
+          </div>
 
-          <p className="mt-3 max-w-2xl text-slate-600">
-            Enter your shipping details and review your cart before placing the order.
-          </p>
-        </div>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+            <form
+              onSubmit={handleSubmit}
+              noValidate
+              className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+            >
+              <h2 className="text-lg font-bold text-slate-900">
+                Shipping address
+              </h2>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
-          <form
-            onSubmit={handleSubmit}
-            noValidate
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
-          >
-            <h2 className="text-xl font-bold tracking-tight text-slate-950">
-              Shipping address
-            </h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {SHIPPING_FIELDS.map((field) => {
+                  const fieldError =
+                    validationErrors[field.name];
 
-            <div className="mt-6 grid gap-5 sm:grid-cols-2">
-              {SHIPPING_FIELDS.map((field) => {
-                const fieldError = validationErrors[field.name];
-
-                return (
-                  <div
-                    key={field.name}
-                    className={
-                      field.name === 'addressLine1'
-                        ? 'sm:col-span-2'
-                        : ''
-                    }
-                  >
-                    <label
-                      htmlFor={field.name}
-                      className="block text-sm font-semibold text-slate-800"
-                    >
-                      {field.label}
-                    </label>
-
-                    <input
-                      id={field.name}
-                      name={field.name}
-                      type="text"
-                      value={shippingAddress[field.name]}
-                      onChange={handleFieldChange}
-                      autoComplete={field.autoComplete}
-                      maxLength={field.maxLength}
-                      aria-invalid={Boolean(fieldError)}
-                      aria-describedby={
-                        fieldError
-                          ? `${field.name}-error`
-                          : undefined
+                  return (
+                    <div
+                      key={field.name}
+                      className={
+                        field.colSpan
+                          ? 'sm:col-span-2'
+                          : ''
                       }
-                      className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-100"
+                    >
+                      <label
+                        htmlFor={field.name}
+                        className="block text-sm font-semibold text-slate-800"
+                      >
+                        {field.label}
+                      </label>
+
+                      <input
+                        id={field.name}
+                        name={field.name}
+                        type="text"
+                        value={shippingAddress[field.name]}
+                        onChange={handleFieldChange}
+                        autoComplete={field.autoComplete}
+                        maxLength={field.maxLength}
+                        aria-invalid={Boolean(fieldError)}
+                        aria-describedby={
+                          fieldError
+                            ? `${field.name}-error`
+                            : undefined
+                        }
+                        className={`mt-1.5 w-full rounded-lg border bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:ring-2 ${
+                          fieldError
+                            ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+                            : 'border-slate-300 focus:border-blue-500 focus:ring-blue-100'
+                        }`}
+                      />
+
+                      {fieldError && (
+                        <p
+                          id={`${field.name}-error`}
+                          className="mt-1.5 text-xs font-medium text-red-600"
+                        >
+                          {fieldError}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {submitError && (
+                <div
+                  className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium leading-6 text-red-700"
+                  role="alert"
+                >
+                  {submitError}
+                </div>
+              )}
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-300"
+                >
+                  {isSubmitting
+                    ? 'Placing order...'
+                    : 'Place Order'}
+                </button>
+
+                <Link
+                  to="/cart"
+                  className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Return to cart
+                </Link>
+              </div>
+            </form>
+
+            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-20">
+              <h2 className="text-lg font-bold text-slate-900">
+                Order Summary
+              </h2>
+
+              <div className="mt-4 space-y-4">
+                {cartItems.map((item) => (
+                  <div
+                    key={item.productId}
+                    className="flex gap-3 border-b border-slate-100 pb-4 last:border-0 last:pb-0"
+                  >
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      className="h-14 w-14 shrink-0 rounded-lg bg-slate-100 object-cover"
                     />
 
-                    {fieldError && (
-                      <p
-                        id={`${field.name}-error`}
-                        className="mt-2 text-sm font-medium text-red-700"
-                      >
-                        {fieldError}
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-2 text-sm font-semibold text-slate-900">
+                        {item.name}
                       </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
 
-            {submitError && (
-              <div
-                className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700"
-                role="alert"
-              >
-                {submitError}
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        Qty: {item.quantity}
+                      </p>
+                    </div>
+
+                    <p className="shrink-0 text-sm font-bold text-slate-900">
+                      {lkrFormatter.format(
+                        item.price * item.quantity,
+                      )}
+                    </p>
+                  </div>
+                ))}
               </div>
-            )}
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-              >
-                {isSubmitting
-                  ? 'Placing order...'
-                  : 'Place order'}
-              </button>
+              <div className="mt-4 border-t border-slate-100 pt-4">
+                <div className="flex items-center justify-between gap-4 text-sm text-slate-600">
+                  <span>
+                    Items ({itemCount})
+                  </span>
 
-              <Link
-                to="/cart"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-              >
-                Return to cart
-              </Link>
-            </div>
-          </form>
-
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-6">
-            <h2 className="text-xl font-bold tracking-tight text-slate-950">
-              Order summary
-            </h2>
-
-            <div className="mt-6 space-y-5">
-              {cartItems.map((item) => (
-                <div
-                  key={item.productId}
-                  className="flex gap-4 border-b border-slate-200 pb-5 last:border-b-0 last:pb-0"
-                >
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="h-16 w-16 rounded-xl bg-slate-100 object-cover"
-                  />
-
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-slate-950">
-                      {item.name}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Quantity: {item.quantity}
-                    </p>
-                  </div>
-
-                  <p className="text-sm font-semibold text-slate-950">
-                    {priceFormatter.format(
-                      item.price * item.quantity,
-                    )}
-                  </p>
+                  <span className="font-semibold text-slate-900">
+                    {lkrFormatter.format(subtotal)}
+                  </span>
                 </div>
-              ))}
-            </div>
 
-            <div className="mt-6 border-t border-slate-200 pt-5">
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>Items</span>
-                <span className="font-semibold text-slate-950">
-                  {itemCount}
-                </span>
+                <div className="mt-4 flex items-center justify-between gap-4">
+                  <span className="font-semibold text-slate-900">
+                    Cart total
+                  </span>
+
+                  <span className="text-xl font-extrabold text-slate-900">
+                    {lkrFormatter.format(subtotal)}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  The server verifies current product prices and
+                  calculates the final total when you place the
+                  order.
+                </p>
               </div>
+            </aside>
+          </div>
+        </section>
+      </main>
 
-              <div className="mt-4 flex items-center justify-between gap-4">
-                <span className="font-semibold text-slate-900">
-                  Cart subtotal
-                </span>
-
-                <span className="text-2xl font-bold text-slate-950">
-                  {priceFormatter.format(subtotal)}
-                </span>
-              </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                The server will verify current product prices and calculate the final subtotal before saving your order.
-              </p>
-            </div>
-          </aside>
-        </div>
-      </section>
-    </main>
+      <Footer />
+    </div>
   );
 }
 

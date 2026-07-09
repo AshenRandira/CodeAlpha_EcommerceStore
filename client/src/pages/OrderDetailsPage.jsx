@@ -7,21 +7,28 @@ import {
   Link,
   useParams,
 } from 'react-router';
+import {
+  ArrowLeft,
+  MapPin,
+} from 'lucide-react';
+import Footer from '../components/Footer.jsx';
 import Navbar from '../components/Navbar.jsx';
 import { useAuth } from '../context/useAuth.js';
+import {
+  formatDate,
+  lkrFormatter,
+  longDateFormatter,
+} from '../utils/format.js';
 
-const priceFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-});
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
-});
+const STATUS_STYLES = {
+  placed: 'bg-blue-50 text-blue-700',
+  pending: 'bg-amber-50 text-amber-700',
+  processing: 'bg-blue-50 text-blue-700',
+  shipped: 'bg-indigo-50 text-indigo-700',
+  delivered: 'bg-emerald-50 text-emerald-700',
+  completed: 'bg-emerald-50 text-emerald-700',
+  cancelled: 'bg-red-50 text-red-700',
+};
 
 async function readJsonResponse(response) {
   try {
@@ -31,17 +38,7 @@ async function readJsonResponse(response) {
   }
 }
 
-function formatOrderDate(value) {
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return 'Date unavailable';
-  }
-
-  return dateFormatter.format(date);
-}
-
-function getOrderItemCount(order) {
+function getItemCount(order) {
   if (!Array.isArray(order?.items)) {
     return 0;
   }
@@ -55,6 +52,13 @@ function getOrderItemCount(order) {
           : 0
       ),
     0,
+  );
+}
+
+function getStatusClass(status) {
+  return (
+    STATUS_STYLES[status?.toLowerCase()] ??
+    'bg-slate-100 text-slate-700'
   );
 }
 
@@ -135,17 +139,21 @@ function OrderDetailsPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-slate-50">
         <Navbar />
 
-        <section className="mx-auto max-w-5xl px-5 py-10 sm:px-6 sm:py-14 lg:px-8">
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-            <p className="font-semibold text-slate-700">
-              Loading order details...
-            </p>
-          </div>
-        </section>
-      </main>
+        <main className="flex-1">
+          <section className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+              <p className="text-sm font-semibold text-slate-600">
+                Loading order details...
+              </p>
+            </div>
+          </section>
+        </main>
+
+        <Footer />
+      </div>
     );
   }
 
@@ -154,236 +162,270 @@ function OrderDetailsPage() {
     const isMissing = errorStatus === 404;
     const isAccessDenied = errorStatus === 403;
 
-    const title =
-      isInvalidId
-        ? 'Invalid order ID'
-        : isMissing
-          ? 'Order not found'
-          : isAccessDenied
-            ? 'Access denied'
-            : 'We could not load this order.';
+    const title = isInvalidId
+      ? 'Invalid order ID'
+      : isMissing
+        ? 'Order not found'
+        : isAccessDenied
+          ? 'Access denied'
+          : 'Could not load this order';
 
-    const description =
-      isInvalidId
-        ? 'The order address contains an invalid ID.'
-        : isMissing
-          ? 'The requested order does not exist.'
-          : isAccessDenied
-            ? 'This order belongs to another account.'
-            : error;
+    const description = isInvalidId
+      ? 'The order address contains an invalid ID.'
+      : isMissing
+        ? 'The requested order does not exist.'
+        : isAccessDenied
+          ? 'This order belongs to another account.'
+          : error;
+
+    const canRetry =
+      !isInvalidId &&
+      !isMissing &&
+      !isAccessDenied;
 
     return (
-      <main className="min-h-screen bg-slate-50">
+      <div className="flex min-h-screen flex-col bg-slate-50">
         <Navbar />
 
-        <section className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
-          <div
-            className="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-12"
-            role="alert"
-          >
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-red-700">
-              Order details
-            </p>
+        <main className="flex flex-1 items-center">
+          <section className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
+            <div
+              className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-10"
+              role="alert"
+            >
+              <h1 className="text-xl font-bold text-slate-900">
+                {title}
+              </h1>
 
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-              {title}
-            </h1>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {description}
+              </p>
 
-            <p className="mx-auto mt-4 max-w-xl leading-7 text-slate-600">
-              {description}
-            </p>
-
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              {!isInvalidId &&
-                !isMissing &&
-                !isAccessDenied && (
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                {canRetry && (
                   <button
                     type="button"
                     onClick={handleRetry}
-                    className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                    className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                   >
                     Try again
                   </button>
                 )}
 
-              <Link
-                to="/orders"
-                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-              >
-                Back to my orders
-              </Link>
+                <Link
+                  to="/orders"
+                  className="rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Back to my orders
+                </Link>
+              </div>
             </div>
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
+
+        <Footer />
+      </div>
     );
   }
 
-  const itemCount = getOrderItemCount(order);
+  const itemCount = getItemCount(order);
+  const statusClass = getStatusClass(order.status);
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <div className="flex min-h-screen flex-col bg-slate-50">
       <Navbar />
 
-      <section className="mx-auto max-w-6xl px-5 py-10 sm:px-6 sm:py-14 lg:px-8">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-blue-600">
-              Order details
-            </p>
+      <main className="flex-1">
+        <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+          <Link
+            to="/orders"
+            className="mb-6 inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-slate-500 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            <ArrowLeft
+              size={15}
+              aria-hidden="true"
+            />
+            Back to orders
+          </Link>
 
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Your order
-            </h1>
+          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+                Order Details
+              </h1>
 
-            <p className="mt-3 break-all text-sm font-medium text-slate-500">
-              {order._id}
-            </p>
+              <p className="mt-2 break-all font-mono text-xs leading-5 text-slate-500">
+                {order._id}
+              </p>
+            </div>
+
+            <span
+              className={`w-fit rounded-full px-4 py-1.5 text-sm font-bold capitalize ${statusClass}`}
+            >
+              {order.status}
+            </span>
           </div>
 
-          <span className="w-fit rounded-full bg-blue-50 px-4 py-2 text-sm font-semibold capitalize text-blue-700">
-            {order.status}
-          </span>
-        </div>
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+            <div className="space-y-5">
+              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+                <div className="flex flex-col gap-2 border-b border-slate-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      Items
+                    </h2>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-          <div className="space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold tracking-tight text-slate-950">
-                    Items
-                  </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {itemCount === 1
+                        ? '1 item in this order'
+                        : `${itemCount} items in this order`}
+                    </p>
+                  </div>
 
-                  <p className="mt-2 text-sm text-slate-500">
-                    {itemCount === 1
-                      ? '1 item in this order'
-                      : `${itemCount} items in this order`}
+                  <p className="text-xs leading-5 text-slate-500">
+                    {formatDate(
+                      order.createdAt,
+                      longDateFormatter,
+                    )}
                   </p>
                 </div>
 
-                <p className="text-sm text-slate-500">
-                  {formatOrderDate(order.createdAt)}
-                </p>
-              </div>
+                <div className="divide-y divide-slate-100">
+                  {order.items.map((item, index) => (
+                    <article
+                      key={`${item.product}-${index}`}
+                      className="py-5 first:pt-5 last:pb-0"
+                    >
+                      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-slate-900">
+                            {item.name}
+                          </h3>
 
-              <div className="mt-6 divide-y divide-slate-200">
-                {order.items.map((item, index) => (
-                  <article
-                    key={`${item.product}-${index}`}
-                    className="grid gap-4 py-5 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto]"
-                  >
-                    <div>
-                      <h3 className="font-bold text-slate-950">
-                        {item.name}
-                      </h3>
+                          <p className="mt-1 break-all text-xs leading-5 text-slate-400">
+                            Product ID: {item.product}
+                          </p>
 
-                      <p className="mt-2 break-all text-xs text-slate-400">
-                        Product ID: {item.product}
-                      </p>
+                          <p className="mt-2 text-sm text-slate-600">
+                            {lkrFormatter.format(item.price)}
+                            {' x '}
+                            {item.quantity}
+                          </p>
+                        </div>
 
-                      <p className="mt-3 text-sm text-slate-600">
-                        {priceFormatter.format(item.price)} each
-                        {' - '}
-                        Quantity: {item.quantity}
-                      </p>
-                    </div>
+                        <div className="sm:text-right">
+                          <p className="text-xs text-slate-500">
+                            Line total
+                          </p>
 
-                    <div className="sm:text-right">
-                      <p className="text-sm font-medium text-slate-500">
-                        Line total
-                      </p>
+                          <p className="mt-1 text-base font-bold text-slate-900">
+                            {lkrFormatter.format(
+                              item.price * item.quantity,
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
 
-                      <p className="mt-1 text-lg font-bold text-slate-950">
-                        {priceFormatter.format(
-                          item.price * item.quantity,
-                        )}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+              <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+                <div className="mb-4 flex items-center gap-2">
+                  <MapPin
+                    size={17}
+                    className="text-blue-600"
+                    aria-hidden="true"
+                  />
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-              <h2 className="text-xl font-bold tracking-tight text-slate-950">
-                Shipping address
+                  <h2 className="text-base font-bold text-slate-900">
+                    Shipping Address
+                  </h2>
+                </div>
+
+                <address className="not-italic text-sm leading-7 text-slate-600">
+                  <p className="font-semibold text-slate-900">
+                    {order.shippingAddress.fullName}
+                  </p>
+
+                  <p>
+                    {order.shippingAddress.addressLine1}
+                  </p>
+
+                  <p>
+                    {order.shippingAddress.city}
+                    {' '}
+                    {order.shippingAddress.postalCode}
+                  </p>
+
+                  <p>
+                    {order.shippingAddress.country}
+                  </p>
+                </address>
+              </section>
+            </div>
+
+            <aside className="h-fit rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-20">
+              <h2 className="text-base font-bold text-slate-900">
+                Order Summary
               </h2>
 
-              <address className="mt-5 not-italic leading-7 text-slate-600">
-                <p className="font-semibold text-slate-950">
-                  {order.shippingAddress.fullName}
-                </p>
-
-                <p>{order.shippingAddress.addressLine1}</p>
-
-                <p>
-                  {order.shippingAddress.city}
-                  {' '}
-                  {order.shippingAddress.postalCode}
-                </p>
-
-                <p>{order.shippingAddress.country}</p>
-              </address>
-            </section>
-          </div>
-
-          <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-6">
-            <h2 className="text-xl font-bold tracking-tight text-slate-950">
-              Order summary
-            </h2>
-
-            <dl className="mt-6 space-y-4">
-              <div className="flex items-center justify-between gap-4 text-sm">
-                <dt className="text-slate-600">
-                  Items
-                </dt>
-
-                <dd className="font-semibold text-slate-950">
-                  {itemCount}
-                </dd>
-              </div>
-
-              <div className="flex items-center justify-between gap-4 text-sm">
-                <dt className="text-slate-600">
-                  Status
-                </dt>
-
-                <dd className="font-semibold capitalize text-slate-950">
-                  {order.status}
-                </dd>
-              </div>
-
-              <div className="border-t border-slate-200 pt-4">
+              <dl className="mt-5 space-y-4 text-sm">
                 <div className="flex items-center justify-between gap-4">
-                  <dt className="font-semibold text-slate-900">
-                    Subtotal
+                  <dt className="text-slate-500">
+                    Items
                   </dt>
 
-                  <dd className="text-2xl font-bold text-slate-950">
-                    {priceFormatter.format(order.subtotal)}
+                  <dd className="font-semibold text-slate-900">
+                    {itemCount}
                   </dd>
                 </div>
-              </div>
-            </dl>
 
-            <Link
-              to="/orders"
-              className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-            >
-              Back to my orders
-            </Link>
+                <div className="flex items-center justify-between gap-4">
+                  <dt className="text-slate-500">
+                    Status
+                  </dt>
 
-            <Link
-              to="/"
-              className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-            >
-              Continue shopping
-            </Link>
-          </aside>
-        </div>
-      </section>
-    </main>
+                  <dd
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold capitalize ${statusClass}`}
+                  >
+                    {order.status}
+                  </dd>
+                </div>
+
+                <div className="border-t border-slate-100 pt-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <dt className="font-semibold text-slate-900">
+                      Total
+                    </dt>
+
+                    <dd className="text-xl font-extrabold text-slate-900">
+                      {lkrFormatter.format(order.subtotal)}
+                    </dd>
+                  </div>
+                </div>
+              </dl>
+
+              <Link
+                to="/orders"
+                className="mt-6 flex w-full items-center justify-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Back to my orders
+              </Link>
+
+              <Link
+                to="/"
+                className="mt-3 flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Continue shopping
+              </Link>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 

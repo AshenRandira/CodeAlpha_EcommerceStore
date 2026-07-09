@@ -1,51 +1,97 @@
+import {
+  useState,
+} from 'react';
 import { Link } from 'react-router';
-
-const priceFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-});
+import {
+  ImageOff,
+  PackageX,
+} from 'lucide-react';
+import { lkrFormatter } from '../utils/format.js';
 
 function ProductCard({ product }) {
+  const [imageError, setImageError] = useState(false);
+
   const inStock = product.stock > 0;
 
   return (
     <Link
       to={`/products/${product._id}`}
-      className="group block rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
       aria-label={`View ${product.name}`}
+      className="group block h-full rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
     >
-      <article className="h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:shadow-lg">
-        <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
+      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-200 group-hover:-translate-y-1 group-hover:border-blue-200 group-hover:shadow-lg">
+        <div className="aspect-[4/3] w-full overflow-hidden bg-slate-100">
+          {imageError ? (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-4 text-center text-slate-400">
+              <ImageOff
+                size={28}
+                strokeWidth={1.5}
+                aria-hidden="true"
+              />
+
+              <span className="text-xs font-medium">
+                Image unavailable
+              </span>
+            </div>
+          ) : (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              loading="lazy"
+              decoding="async"
+              onError={() => setImageError(true)}
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            />
+          )}
         </div>
 
-        <div className="p-5">
-          <div className="flex items-start justify-between gap-3">
-            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+        <div className="flex flex-1 flex-col p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <span
+              className="max-w-[65%] truncate rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600"
+              title={product.category}
+            >
               {product.category}
             </span>
 
             <span
-              className={`text-xs font-semibold ${
-                inStock ? 'text-emerald-700' : 'text-red-700'
+              className={`flex shrink-0 items-center gap-1 text-[11px] font-semibold ${
+                inStock
+                  ? 'text-emerald-600'
+                  : 'text-slate-400'
               }`}
             >
-              {inStock ? `${product.stock} in stock` : 'Out of stock'}
+              {inStock ? (
+                <>
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                    aria-hidden="true"
+                  />
+
+                  In stock
+                </>
+              ) : (
+                <>
+                  <PackageX
+                    size={11}
+                    aria-hidden="true"
+                  />
+
+                  Out of stock
+                </>
+              )}
             </span>
           </div>
 
-          <h2 className="mt-4 text-lg font-bold tracking-tight text-slate-900">
+          <h2 className="mb-3 line-clamp-2 min-h-10 text-sm font-bold leading-5 text-slate-900 transition-colors group-hover:text-blue-600">
             {product.name}
           </h2>
 
-          <p className="mt-4 text-xl font-bold text-slate-950">
-            {priceFormatter.format(product.price)}
-          </p>
+          <div className="mt-auto">
+            <p className="text-lg font-extrabold text-slate-900">
+              {lkrFormatter.format(product.price)}
+            </p>
+          </div>
         </div>
       </article>
     </Link>
