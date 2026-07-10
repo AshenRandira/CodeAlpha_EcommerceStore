@@ -515,6 +515,6 @@ Order placement records an order in MongoDB without processing a real payment.
 
 ## Author
 
-**Ashen DC**
+**Ashen Randira**
 
 CodeAlpha Full Stack Development and DevOps internship project.
