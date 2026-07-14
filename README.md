@@ -1,9 +1,9 @@
 # CodeAlpha E-commerce Store
 
-A complete full-stack e-commerce application and Dockerized web-server deployment built for two CodeAlpha internship tasks:
+A complete full-stack e-commerce application and Dockerized web-server deployment :
 
-- **Full Stack Development — Task 1: Simple E-commerce Store**
-- **DevOps — Task 4: Web Server using Docker**
+- **1: Simple E-commerce Store**
+- **2: Web Server using Docker**
 
 The application allows users to browse products, view product details, manage a persistent cart, register or log in, place orders, and view their order history. The production build runs as a multi-container Docker Compose stack with Nginx serving the React application and reverse-proxying API requests to Express.
 
@@ -14,9 +14,7 @@ The application allows users to browse products, view product details, manage a 
 - Local frontend URL: http://localhost:5173
 - Local API URL: http://localhost:5000
 
-## CodeAlpha Task Coverage
-
-### Full Stack Development — Task 1
+### 1
 
 This repository demonstrates:
 
@@ -30,7 +28,7 @@ This repository demonstrates:
 - Owner-protected Order Details page
 - MongoDB storage for products, users, and orders
 
-### DevOps — Task 4
+### 2
 
 This repository demonstrates:
 
@@ -517,4 +515,3 @@ Order placement records an order in MongoDB without processing a real payment.
 
 **Ashen Randira**
 
-CodeAlpha Full Stack Development and DevOps internship project.
